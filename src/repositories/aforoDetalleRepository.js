@@ -4,19 +4,35 @@ import AforoDetalle from "../Entities/AforoDetalle.js";
 class AforoDetalleRepository {
 
   async findAllByAforo(aforoId) {
-    const [rows] = await db.query(
-      "SELECT * FROM aforo_detalles WHERE aforo_id = ?",
-      [aforoId]
-    );
-    return rows.map(r => new AforoDetalle(r));
+    // ✅ AGREGADO JOIN con tipos_empaque para traer tipo_empaque
+    const [rows] = await db.query(`
+      SELECT 
+        ad.*,
+        te.tipo AS tipo_empaque,
+        te.caracteristicas,
+        te.capacidad_m3,
+        te.peso_unitario_kg
+      FROM aforo_detalles ad
+      INNER JOIN tipos_empaque te ON ad.empaque_id = te.id
+      WHERE ad.aforo_id = ?
+      ORDER BY ad.id
+    `, [aforoId]);
+    
+    return rows;
   }
 
   async findById(id) {
-    const [rows] = await db.query(
-      "SELECT * FROM aforo_detalles WHERE id = ?",
-      [id]
-    );
-    return rows.length ? new AforoDetalle(rows[0]) : null;
+    const [rows] = await db.query(`
+      SELECT 
+        ad.*,
+        te.tipo AS tipo_empaque,
+        te.caracteristicas
+      FROM aforo_detalles ad
+      INNER JOIN tipos_empaque te ON ad.empaque_id = te.id
+      WHERE ad.id = ?
+    `, [id]);
+    
+    return rows.length ? rows[0] : null;
   }
 
   async create(data) {
@@ -70,6 +86,18 @@ class AforoDetalleRepository {
       [aforoId]
     );
     return rows[0]?.total_volumen || 0;
+  }
+  
+  async sumTotalsByAforo(aforoId) {
+    const [rows] = await db.query(
+      `SELECT 
+        COALESCE(SUM(volumen_calculado), 0) AS total_volumen,
+        COALESCE(SUM(peso_calculado), 0) AS total_peso
+      FROM aforo_detalles
+      WHERE aforo_id = ?`,
+      [aforoId]
+    );
+    return rows[0] || { total_volumen: 0, total_peso: 0 };
   }
 }
 

@@ -5,7 +5,19 @@ import TipoEmpaqueRepository from "../repositories/tipoEmpaqueRepository.js";
 class AforoDetalleService {
 
   async listByAforo(aforoId) {
-    return await AforoDetalleRepository.findAllByAforo(aforoId);
+    const detalles = await AforoDetalleRepository.findAllByAforo(aforoId);
+    
+    return detalles.map(det => ({
+      id: det.id,
+      aforo_id: det.aforo_id,
+      empaque_id: det.empaque_id,
+      tipo_empaque: det.tipo_empaque 
+        ? `${det.tipo_empaque} - ${det.caracteristicas}` 
+        : 'Sin tipo',
+      cantidad_empaques: det.cantidad_empaques,
+      volumen_calculado: parseFloat(det.volumen_calculado || 0).toFixed(3),
+      peso_calculado: parseFloat(det.peso_calculado || 0).toFixed(3)
+    }));
   }
 
   async getById(id) {
@@ -24,7 +36,6 @@ class AforoDetalleService {
     const empaque = await TipoEmpaqueRepository.findById(tipo_empaque_id);
     if (!empaque) throw new Error("Tipo de empaque no existe");
 
-    // 🔥 CÁLCULO AUTOMÁTICO
     const volumen_m3 = cantidad * empaque.capacidad_m3;
 
     const created = await AforoDetalleRepository.create({
@@ -70,10 +81,10 @@ class AforoDetalleService {
 
   async _recalcularTotales(aforoId) {
     const sums = await AforoDetalleRepository.sumTotalsByAforo(aforoId);
-    await AforoRepository.updateTotals(
+    await AforoRepository.updateTotales(
       aforoId,
       parseFloat(sums.total_volumen) || 0,
-      0 
+      parseFloat(sums.total_peso) || 0
     );
   }
 }

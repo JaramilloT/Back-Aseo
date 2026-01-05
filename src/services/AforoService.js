@@ -4,9 +4,6 @@ import AforoRepository from "../repositories/aforoRepository.js";
 class AforoService {
 
   async getAll(usuarioId, rol) {
-    if (rol === "aseo" && usuarioId) {
-      return await AforoRepository.findByUsuario(usuarioId);
-    }
     return await AforoRepository.findAll();
   }
 
@@ -22,7 +19,7 @@ class AforoService {
     try {
       await conn.beginTransaction();
 
-      console.log('🔵 Creando aforo con datos:', data);
+      console.log('Creando aforo con datos:', data);
 
       // Insertar aforo principal
       const [res] = await conn.query(
@@ -106,5 +103,4 @@ class AforoService {
     return true;
   }
 }
-
 export default new AforoService();

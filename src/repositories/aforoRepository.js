@@ -4,21 +4,95 @@ import Aforo from "../Entities/Aforo.js";
 class AforoRepository {
 
   async findAll() {
-    const [rows] = await db.query("SELECT * FROM aforos ORDER BY fecha DESC");
-    return rows.map(r => new Aforo(r));
+    const [rows] = await db.query(`
+      SELECT
+        a.id,
+        a.fecha,
+        a.hora,
+        a.tipo_aforo,
+        a.zona_ruta_id,
+        a.total_volumen_m3,
+        a.total_peso_kg,
+        a.observaciones,
+        a.nombre_aforador,
+        a.nombre_usuario_testigo,
+        a.usuario_id,
+        a.fecha_creacion,
+        a.fecha_actualizacion,
+        z.nombre_zona,
+        z.color_ruta,
+        u.nombre AS usuario_registra
+      FROM aforos a
+      LEFT JOIN zonas_rutas z ON a.zona_ruta_id = z.id
+      LEFT JOIN usuarios u ON a.usuario_id = u.id
+      ORDER BY a.fecha DESC, a.hora DESC
+    `);
+    
+    console.log('Query findAll ejecutada, filas:', rows.length);
+    if (rows.length > 0) {
+      console.log('Primera fila:', rows[0]);
+    }
+    
+    return rows;
   }
 
   async findByUsuario(usuarioId) {
     const [rows] = await db.query(
-      "SELECT * FROM aforos WHERE usuario_id = ?",
+      `SELECT
+        a.id,
+        a.fecha,
+        a.hora,
+        a.tipo_aforo,
+        a.zona_ruta_id,
+        a.total_volumen_m3,
+        a.total_peso_kg,
+        a.observaciones,
+        a.nombre_aforador,
+        a.nombre_usuario_testigo,
+        a.usuario_id,
+        a.fecha_creacion,
+        a.fecha_actualizacion,
+        z.nombre_zona,
+        z.color_ruta,
+        u.nombre AS usuario_registra
+      FROM aforos a
+      LEFT JOIN zonas_rutas z ON a.zona_ruta_id = z.id
+      LEFT JOIN usuarios u ON a.usuario_id = u.id
+      WHERE a.usuario_id = ?
+      ORDER BY a.fecha DESC, a.hora DESC`,
       [usuarioId]
     );
-    return rows.map(r => new Aforo(r));
+    
+    return rows;
   }
 
   async findById(id) {
-    const [rows] = await db.query("SELECT * FROM aforos WHERE id = ?", [id]);
-    return rows.length ? new Aforo(rows[0]) : null;
+    const [rows] = await db.query(
+      `SELECT
+        a.id,
+        a.fecha,
+        a.hora,
+        a.tipo_aforo,
+        a.zona_ruta_id,
+        a.total_volumen_m3,
+        a.total_peso_kg,
+        a.observaciones,
+        a.nombre_aforador,
+        a.nombre_usuario_testigo,
+        a.usuario_id,
+        a.fecha_creacion,
+        a.fecha_actualizacion,
+        z.nombre_zona,
+        z.color_ruta,
+        u.nombre AS usuario_registra
+      FROM aforos a
+      LEFT JOIN zonas_rutas z ON a.zona_ruta_id = z.id
+      LEFT JOIN usuarios u ON a.usuario_id = u.id
+      WHERE a.id = ?`,
+      [id]
+    );
+    
+    return rows.length ? rows[0] : null;
   }
 
   async create(data) {
